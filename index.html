@@ -221,7 +221,7 @@ body.ready .loader{opacity:0;pointer-events:none}
     <div class="pocket">
       <div class="to">For <span class="name">Stacey</span></div>
     </div>
-    <div class="postmark"><span>PAR<br>AVION<br><span id="pm-date">23 OCT</span></span></div>
+    <div class="postmark"><span id="pm-date">23<br>OCT<br>2026</span></div>
     <div class="flap"></div>
     <div class="seal">♥</div>
   </div>
@@ -256,8 +256,8 @@ body.ready .loader{opacity:0;pointer-events:none}
     document.querySelectorAll('.name').forEach(function(el){ el.textContent = nm; });
   }
   var d = new Date();
-  document.getElementById('pm-date').textContent =
-    d.getDate() + ' ' + d.toLocaleString('en-GB',{month:'short'}).toUpperCase();
+  document.getElementById('pm-date').innerHTML =
+    d.getDate() + '<br>' + d.toLocaleString('en-GB',{month:'short'}).toUpperCase() + '<br>' + d.getFullYear();
 
   var stage = document.getElementById('stage');
   var again = document.getElementById('again');
