@@ -165,6 +165,18 @@ body:not(.ready) .stage{opacity:0}
 .loader{position:fixed;left:50%;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:var(--env);animation:pulse 1s ease-in-out infinite alternate;transition:opacity .3s ease}
 body.ready .loader{opacity:0;pointer-events:none}
 @keyframes pulse{from{transform:scale(.6);opacity:.4}to{transform:scale(1.2);opacity:1}}
+.stage{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.stage.opened{cursor:default}
+.stage:focus-visible{outline:3px solid var(--gold);outline-offset:8px;border-radius:12px}
+.seal{animation:sealpulse 1.6s ease-in-out infinite}
+.stage.opened .seal{animation:none}
+@keyframes sealpulse{0%,100%{transform:translateX(-50%) scale(1);box-shadow:0 2px 6px rgba(0,0,0,.25),0 0 0 0 rgba(255,201,77,.7)}50%{transform:translateX(-50%) scale(1.12);box-shadow:0 2px 6px rgba(0,0,0,.25),0 0 0 14px rgba(255,201,77,0)}}
+.stage:not(.opened) .envelope{animation:nudge 3s ease-in-out infinite}
+@keyframes nudge{0%,100%{transform:translateX(-50%) rotate(0)}45%{transform:translateX(-50%) rotate(0)}50%{transform:translateX(-50%) rotate(-1.6deg)}55%{transform:translateX(-50%) rotate(1.6deg)}60%{transform:translateX(-50%) rotate(-1deg)}65%{transform:translateX(-50%) rotate(0)}}
+.tap{position:absolute;left:0;right:0;bottom:-34px;text-align:center;font:600 15px var(--body);letter-spacing:.04em;color:var(--gold);transition:opacity .3s ease;opacity:0}
+.tap.show{opacity:1;animation:breathe 1.6s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:1}50%{opacity:.45}}
+.stage.opened .tap{opacity:0;animation:none;pointer-events:none}
 .again{
   font:600 15px var(--body);color:var(--night);background:var(--gold);
   border:0;border-radius:999px;padding:10px 20px;cursor:pointer;
@@ -184,7 +196,7 @@ body.ready .loader{opacity:0;pointer-events:none}
 <body>
 <canvas id="confetti" aria-hidden="true"></canvas>
 
-<div class="stage" id="stage" aria-live="polite">
+<div class="stage" id="stage" role="button" tabindex="0" aria-label="Birthday card. Tap to open.">
   <div class="envelope" aria-hidden="true">
     <div class="env-back"></div>
     <div class="letter">Surprise!</div>
@@ -195,6 +207,7 @@ body.ready .loader{opacity:0;pointer-events:none}
     <div class="flap"></div>
     <div class="seal">♥</div>
   </div>
+  <div class="tap" id="tap" aria-hidden="true">Tap the seal to open ✦</div>
 
   <div class="card">
     <div class="inside">
@@ -211,7 +224,7 @@ body.ready .loader{opacity:0;pointer-events:none}
   </div>
 </div>
 
-<button class="again" id="again" type="button">Open it again</button>
+<button class="again" id="again" type="button">Close and open again</button>
 
 <script>
 (function(){
@@ -230,17 +243,29 @@ body.ready .loader{opacity:0;pointer-events:none}
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var timers = [];
 
-  function play(){
-    timers.forEach(clearTimeout); timers = [];
-    stage.className = 'stage'; again.classList.remove('show');
+  var tap = document.getElementById('tap');
+  var isOpen = false;
+  // Closed envelope, waiting for a tap.
+  function reset(){
+    timers.forEach(clearTimeout); timers = []; isOpen = false;
+    stage.className = 'stage'; again.classList.remove('show'); tap.classList.remove('show');
     void stage.offsetWidth;
-    if (reduce){ stage.className = 'stage s1 s2 s3 s4'; again.classList.add('show'); return; }
-    var steps = [[500,'s1'],[1250,'s2'],[2350,'s3'],[3400,'s4']];
-    steps.forEach(function(s){ timers.push(setTimeout(function(){ stage.classList.add(s[1]); }, s[0])); });
-    timers.push(setTimeout(burst, 3900));
-    timers.push(setTimeout(function(){ again.classList.add('show'); }, 4800));
+    timers.push(setTimeout(function(){ tap.classList.add('show'); }, 900));
   }
-  again.addEventListener('click', play);
+  // Runs the opening sequence once the viewer taps.
+  function open(){
+    if (isOpen) return; isOpen = true;
+    timers.forEach(clearTimeout); timers = [];
+    stage.classList.add('opened'); tap.classList.remove('show');
+    if (reduce){ stage.className = 'stage opened s1 s2 s3 s4'; burst(); again.classList.add('show'); return; }
+    var steps = [[50,'s1'],[800,'s2'],[1900,'s3'],[2950,'s4']];
+    steps.forEach(function(s){ timers.push(setTimeout(function(){ stage.classList.add(s[1]); }, s[0])); });
+    timers.push(setTimeout(burst, 3450));
+    timers.push(setTimeout(function(){ again.classList.add('show'); }, 4350));
+  }
+  stage.addEventListener('click', open);
+  stage.addEventListener('keydown', function(e){ if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); open(); } });
+  again.addEventListener('click', reset);
 
   // ---------- Confetti ----------
   var cv = document.getElementById('confetti'), ctx = cv.getContext('2d');
@@ -276,7 +301,7 @@ body.ready .loader{opacity:0;pointer-events:none}
     if (started) return; started = true;
     requestAnimationFrame(function(){ requestAnimationFrame(function(){
       document.body.classList.add('ready');
-      setTimeout(play, 300);
+      setTimeout(reset, 300);
     }); });
   }
   var loaded = new Promise(function(res){ document.readyState === 'complete' ? res() : addEventListener('load', res); });
