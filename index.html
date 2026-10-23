@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>body{margin:0}</style>
+<title>Birthday Card</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shrikhand&family=Figtree:wght@400;600&family=Caveat:wght@600&display=swap">
+<style>
+/* Layout: one screen, an envelope in the middle that opens, lets the card out, then the card opens to the message. */
+:root{
+  --night:#1c1f3f;      /* backdrop */
+  --night-2:#2a2e5a;
+  --env:#f4b6c6;        /* envelope */
+  --env-shade:#e595aa;
+  --env-deep:#d57b93;
+  --paper:#fffaf3;      /* card inside */
+  --ink:#2b2145;
+  --muted:#6b6185;
+  --mint:#7fd8c3;       /* card cover */
+  --gold:#ffc94d;
+  --coral:#ff7a6b;
+  --display:"Shrikhand", "Cooper Black", Georgia, serif;
+  --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --hand:"Caveat", "Segoe Print", "Bradley Hand", cursive;
+  --w:min(80vw, 320px, calc((100svh - 150px) / 1.32));
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{
+  background:radial-gradient(120% 80% at 50% 30%, var(--night-2), var(--night));
+  color:var(--paper);font-family:var(--body);
+  overflow:hidden;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+  box-sizing:border-box;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+}
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:5}
+
+.stage{position:relative;width:var(--w);height:calc(var(--w) * 1.32);perspective:1400px}
+
+/* ---------- Envelope ---------- */
+.envelope{
+  position:absolute;left:50%;bottom:8%;
+  width:calc(var(--w) * 1.06);height:calc(var(--w) * 0.72);
+  transform:translateX(-50%);
+  transition:transform .9s cubic-bezier(.5,0,.75,0), opacity .7s ease;
+}
+.env-back{position:absolute;inset:0;background:var(--env-deep);border-radius:6px}
+.letter{
+  position:absolute;left:7%;right:7%;top:6%;height:88%;
+  background:var(--paper);border-radius:4px;
+  display:flex;align-items:flex-start;justify-content:center;padding-top:10%;
+  box-sizing:border-box;
+  font-family:var(--display);color:var(--coral);font-size:calc(var(--w) * .09);
+  transition:transform 1s cubic-bezier(.3,1.3,.5,1);
+  z-index:2;
+}
+.pocket{
+  position:absolute;inset:0;z-index:3;border-radius:6px;
+  background:linear-gradient(160deg,var(--env),var(--env-shade));
+  clip-path:polygon(0 0,50% 56%,100% 0,100% 100%,0 100%);
+}
+.pocket .to{
+  position:absolute;left:0;right:0;bottom:14%;text-align:center;
+  font-family:var(--hand);color:var(--ink);font-size:calc(var(--w) * .1);
+}
+.postmark{
+  position:absolute;right:7%;bottom:12%;
+  width:calc(var(--w) * .2);aspect-ratio:1;border-radius:50%;
+  z-index:3;border:2px solid rgba(43,33,69,.45);color:rgba(43,33,69,.6);
+  display:grid;place-items:center;text-align:center;
+  font:600 calc(var(--w) * .028)/1.15 var(--body);letter-spacing:.08em;
+  transform:rotate(-14deg);
+}
+.flap{
+  position:absolute;left:0;right:0;top:0;height:62%;z-index:4;
+  background:linear-gradient(180deg,var(--env-shade),var(--env));
+  clip-path:polygon(0 0,100% 0,50% 100%);
+  transform-origin:top center;
+  transition:transform .7s ease-in-out, z-index 0s .35s;
+}
+.seal{
+  position:absolute;left:50%;top:calc(62% - var(--w) * .09);z-index:5;
+  width:calc(var(--w) * .15);aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #ff9a8d, var(--coral) 60%, #d9544a);
+  transform:translateX(-50%);
+  display:grid;place-items:center;
+  font-family:var(--display);color:var(--paper);font-size:calc(var(--w) * .07);
+  box-shadow:0 2px 6px rgba(0,0,0,.25);
+  transition:opacity .25s ease, transform .4s ease;
+}
+
+/* ---------- Card ---------- */
+.card{
+  position:absolute;inset:0;
+  opacity:0;transform:translateY(12%) scale(.7);
+  transition:transform .9s cubic-bezier(.2,1.2,.4,1), opacity .4s ease;
+  transform-style:preserve-3d;
+}
+.inside,.cover{
+  position:absolute;inset:0;border-radius:10px;box-sizing:border-box;
+}
+.inside{
+  background:var(--paper);color:var(--ink);
+  padding:calc(var(--w) * .08) calc(var(--w) * .09);
+  display:flex;flex-direction:column;gap:calc(var(--w) * .035);
+  box-shadow:0 18px 40px rgba(8,8,30,.45);
+}
+.candles{display:flex;gap:calc(var(--w) * .035);justify-content:center;height:calc(var(--w) * .2);align-items:flex-end}
+.candle{
+  position:relative;width:calc(var(--w) * .035);height:calc(var(--w) * .12);border-radius:2px;
+  background:repeating-linear-gradient(135deg,var(--coral) 0 5px,var(--paper) 5px 9px);
+  box-shadow:inset 0 0 0 1px rgba(43,33,69,.12);
+}
+.candle:nth-child(even){height:calc(var(--w) * .1);background:repeating-linear-gradient(135deg,var(--mint) 0 5px,var(--paper) 5px 9px)}
+.candle::before{
+  content:"";position:absolute;left:50%;bottom:100%;
+  width:calc(var(--w) * .03);height:calc(var(--w) * .055);margin-left:calc(var(--w) * -.015);margin-bottom:3px;
+  background:radial-gradient(ellipse at 50% 70%, #fff6c9 15%, var(--gold) 45%, rgba(255,122,107,.0) 72%);
+  border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;
+  animation:flicker 1.4s ease-in-out infinite alternate;
+  transform-origin:50% 100%;
+}
+.candle:nth-child(2)::before{animation-delay:-.4s}
+.candle:nth-child(3)::before{animation-delay:-.9s}
+.candle:nth-child(4)::before{animation-delay:-.2s}
+@keyframes flicker{0%{transform:scale(1) rotate(-3deg)}50%{transform:scale(.88,1.08) rotate(2deg)}100%{transform:scale(1.05,.95) rotate(-1deg)}}
+.inside h1{
+  margin:0;font-family:var(--display);font-weight:400;
+  font-size:calc(var(--w) * .115);line-height:1.02;color:var(--coral);
+  text-align:center;text-wrap:balance;
+}
+.inside p{margin:0;font-size:calc(var(--w) * .048);line-height:1.5;color:var(--ink)}
+.sign{margin-top:auto;font-family:var(--hand);font-size:calc(var(--w) * .085);line-height:1;color:var(--ink);text-align:right}
+
+.cover{
+  z-index:2;transform-origin:left center;backface-visibility:hidden;
+  background:
+    radial-gradient(circle, rgba(255,255,255,.35) 2px, transparent 2.5px) 0 0/22px 22px,
+    var(--mint);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  color:var(--ink);text-align:center;
+  box-shadow:0 18px 40px rgba(8,8,30,.45);
+  transition:transform 1.3s cubic-bezier(.6,0,.25,1), opacity .5s ease .9s;
+}
+.cover .big{font-family:var(--display);font-size:calc(var(--w) * .18);line-height:.9;color:var(--paper);text-shadow:3px 3px 0 var(--coral)}
+.cover .big span{display:block}
+.cover .for{margin-top:14px;font-family:var(--hand);font-size:calc(var(--w) * .1);color:var(--ink)}
+
+/* ---------- Sequence states ---------- */
+.s1 .flap{transform:rotateX(180deg);z-index:1}
+.s1 .seal{opacity:0;transform:translateX(-50%) scale(.6)}
+.s2 .letter{transform:translateY(-55%)}
+.s3 .envelope{transform:translateX(-50%) translateY(140%);opacity:0}
+.s3 .card{opacity:1;transform:none}
+.s4 .cover{transform:rotateY(-170deg);opacity:0}
+
+.stage,.again{transition:opacity .5s ease}
+body:not(.ready) .stage{opacity:0}
+.loader{position:fixed;left:50%;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:var(--env);animation:pulse 1s ease-in-out infinite alternate;transition:opacity .3s ease}
+body.ready .loader{opacity:0;pointer-events:none}
+@keyframes pulse{from{transform:scale(.6);opacity:.4}to{transform:scale(1.2);opacity:1}}
+.again{
+  font:600 15px var(--body);color:var(--night);background:var(--gold);
+  border:0;border-radius:999px;padding:10px 20px;cursor:pointer;
+  opacity:0;transition:opacity .5s ease;pointer-events:none;z-index:6;
+}
+.again.show{opacity:1;pointer-events:auto}
+.again:focus-visible{outline:3px solid var(--paper);outline-offset:3px}
+.hint{font-size:13px;color:rgba(255,250,243,.65);margin:0;text-align:center}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{transition-duration:0s!important;transition-delay:0s!important;animation:none!important}
+}
+</style>
+
+<div class="loader" aria-label="Loading"></div>
+</head>
+<body>
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<div class="stage" id="stage" aria-live="polite">
+  <div class="envelope" aria-hidden="true">
+    <div class="env-back"></div>
+    <div class="letter">Surprise!</div>
+    <div class="pocket">
+      <div class="to">For <span class="name">Stacey</span></div>
+    </div>
+    <div class="postmark"><span>PAR<br>AVION<br><span id="pm-date">23 OCT</span></span></div>
+    <div class="flap"></div>
+    <div class="seal">♥</div>
+  </div>
+
+  <div class="card">
+    <div class="inside">
+      <div class="candles" aria-hidden="true"><i class="candle"></i><i class="candle"></i><i class="candle"></i><i class="candle"></i><i class="candle"></i></div>
+      <h1>Happy birthday, <span class="name">Stacey</span>!</h1>
+      <p>Another year of you is something worth celebrating. We hope today is full of good food, loud laughs and people who love you.</p>
+      <p>Here's to your best year yet.</p>
+      <div class="sign">Lots of love,<br>Aaron &amp; Mum</div>
+    </div>
+    <div class="cover" aria-hidden="true">
+      <div class="big"><span>Happy</span><span>Birthday</span></div>
+      <div class="for">for <span class="name">Stacey</span></div>
+    </div>
+  </div>
+</div>
+
+<button class="again" id="again" type="button">Open it again</button>
+
+<script>
+(function(){
+  // Personalise with a name after # in the link, e.g. ...#Jess or #Mary-Jane
+  var raw = decodeURIComponent((location.hash || '').slice(1)).replace(/[_-]+/g,' ').trim();
+  if (raw && /^[\p{L} .']{1,30}$/u.test(raw)) {
+    var nm = raw.replace(/\b\p{L}/gu, function(c){return c.toUpperCase();});
+    document.querySelectorAll('.name').forEach(function(el){ el.textContent = nm; });
+  }
+  var d = new Date();
+  document.getElementById('pm-date').textContent =
+    d.getDate() + ' ' + d.toLocaleString('en-GB',{month:'short'}).toUpperCase();
+
+  var stage = document.getElementById('stage');
+  var again = document.getElementById('again');
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var timers = [];
+
+  function play(){
+    timers.forEach(clearTimeout); timers = [];
+    stage.className = 'stage'; again.classList.remove('show');
+    void stage.offsetWidth;
+    if (reduce){ stage.className = 'stage s1 s2 s3 s4'; again.classList.add('show'); return; }
+    var steps = [[500,'s1'],[1250,'s2'],[2350,'s3'],[3400,'s4']];
+    steps.forEach(function(s){ timers.push(setTimeout(function(){ stage.classList.add(s[1]); }, s[0])); });
+    timers.push(setTimeout(burst, 3900));
+    timers.push(setTimeout(function(){ again.classList.add('show'); }, 4800));
+  }
+  again.addEventListener('click', play);
+
+  // ---------- Confetti ----------
+  var cv = document.getElementById('confetti'), ctx = cv.getContext('2d');
+  var bits = [], running = false;
+  var colors = ['#ffc94d','#ff7a6b','#7fd8c3','#f4b6c6','#fffaf3'];
+  function size(){ var r = window.devicePixelRatio || 1; cv.width = innerWidth * r; cv.height = innerHeight * r; ctx.setTransform(r,0,0,r,0,0); }
+  addEventListener('resize', size); size();
+  function burst(){
+    var cx = innerWidth/2, cy = innerHeight*0.42;
+    for (var i=0;i<160;i++){
+      var a = Math.random()*Math.PI*2, v = 4 + Math.random()*9;
+      bits.push({x:cx,y:cy,vx:Math.cos(a)*v,vy:Math.sin(a)*v-5,w:6+Math.random()*6,h:4+Math.random()*5,
+        r:Math.random()*6,vr:(Math.random()-.5)*.3,c:colors[i%colors.length],life:0});
+    }
+    if (!running){ running = true; requestAnimationFrame(tick); }
+  }
+  function tick(){
+    ctx.clearRect(0,0,innerWidth,innerHeight);
+    bits = bits.filter(function(b){ return b.y < innerHeight + 30 && b.life < 420; });
+    bits.forEach(function(b){
+      b.life++; b.vy += .18; b.vx *= .985; b.vy *= .985;
+      b.x += b.vx + Math.sin(b.life/12)*.6; b.y += b.vy; b.r += b.vr;
+      ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(b.r);
+      ctx.scale(1, Math.cos(b.life/6));
+      ctx.fillStyle = b.c; ctx.fillRect(-b.w/2,-b.h/2,b.w,b.h); ctx.restore();
+    });
+    if (bits.length) requestAnimationFrame(tick); else { running = false; ctx.clearRect(0,0,innerWidth,innerHeight); }
+  }
+
+  // Wait for the page, fonts and an extra frame before showing anything; give up waiting after 6s.
+  var started = false;
+  function start(){
+    if (started) return; started = true;
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){
+      document.body.classList.add('ready');
+      setTimeout(play, 300);
+    }); });
+  }
+  var loaded = new Promise(function(res){ document.readyState === 'complete' ? res() : addEventListener('load', res); });
+  var fonts = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+  var wanted = ['400 1em Shrikhand','400 1em Figtree','600 1em Figtree','600 1em Caveat'];
+  var faces = document.fonts && document.fonts.load ? Promise.all(wanted.map(function(f){ return document.fonts.load(f).catch(function(){}); })) : Promise.resolve();
+  Promise.all([loaded, fonts, faces]).then(start, start);
+  setTimeout(start, 6000);
+})();
+</script>
+</body>
+</html>
