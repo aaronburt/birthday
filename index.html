@@ -171,7 +171,12 @@ body{
 .s2 .letter{transform:translateY(-55%)}
 .s3 .envelope{transform:translateX(-50%) translateY(140%);opacity:0}
 .s3 .card{opacity:1;transform:none}
-.s4 .cover{transform:rotateY(-180deg)}
+.s4 .cover{animation:coverAround 2.2s cubic-bezier(.5,0,.3,1) forwards}
+@keyframes coverAround{
+  0%{transform:translateX(0) translateZ(0) rotateY(0)}
+  55%{transform:translateX(0) translateZ(0) rotateY(-180deg)}
+  100%{transform:translateX(calc(var(--w) * 1.035)) translateZ(-10px) rotateY(-180deg)}
+}
 
 .stage,.again{transition:opacity .5s ease}
 body:not(.ready) .stage{opacity:0}
